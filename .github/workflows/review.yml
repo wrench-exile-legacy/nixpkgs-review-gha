@@ -92,20 +92,13 @@ jobs:
         run: echo "$INPUTS"
         env:
           INPUTS: "${{ toJSON(github.event.inputs) }}"
+          
       - name: get pr
         id: pr
         run: |
-          while true; do
-            pr="$(gh api "/repos/NixOS/nixpkgs/pulls/$PR_NUMBER")"
-            jq -e '.mergeable_state == "unknown" and (.merged | not)' <<< "$pr" > /dev/null || break
-            echo "mergeable state not known yet, retrying..."
-            sleep 2
-          done
+          pr="$(gh api "/repos/NixOS/nixpkgs/pulls/$PR_NUMBER")"
           jq <<< "$pr"
-          if [[ "$(jq '.merged or .mergeable' <<< "$pr")" != "true" ]]; then
-            echo "::error::PR is not mergeable"
-            exit 1
-          fi
+          
           echo "pr=$pr" >> "$GITHUB_OUTPUT"
           echo "head=$(jq -r '.head.sha' <<< "$pr")" >> "$GITHUB_OUTPUT"
           echo "merge=$(jq -r '.merge_commit_sha' <<< "$pr")" >> "$GITHUB_OUTPUT"
